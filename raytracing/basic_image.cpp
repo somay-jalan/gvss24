@@ -45,13 +45,13 @@ color ray_color(const ray& r,
 
 
     color rColor = color(0,0,0);
-    if(t >0 and t<1e8) {
+    if(t>0 and t<1e8) {
         if(check=="Sphere"){
             point3 hitPt = r.at(t);
             for(int i=0;i<point_light.size();i++){
                 vec3 lightDir = unit_vector(point_light[i].getCenter() - hitPt);
                 vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
-                vec3 half = unit_vector(r.direction()+lightDir);
+                vec3 half = unit_vector(r.direction()*(-1)+lightDir);
                 rColor+= point_light[i].getLightColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
                 rColor+= point_light[i].getLightColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
             }
@@ -69,6 +69,8 @@ color ray_color(const ray& r,
                 rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
                 rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
             }
+            rColor+=ka*ambient_Color;
+            rColor*=hitobjectSphere.getObjectColor();
 
         }else if(check=="Plane"){
             // cout <<"t:"<< t<<endl;
@@ -76,7 +78,7 @@ color ray_color(const ray& r,
             for(int i=0;i<point_light.size();i++){
                 vec3 lightDir = unit_vector(point_light[i].getCenter() - hitPt);
                 vec3 Normal = unit_vector(hitobjectPlane.getNormal());
-                vec3 half = unit_vector(r.direction()+lightDir);
+                vec3 half = unit_vector(r.direction()*(-1)+lightDir);
                 rColor+= point_light[i].getLightColor() * hitobjectPlane.getKd() * max(0.0,dot(Normal, lightDir));
                 rColor+= point_light[i].getLightColor() * hitobjectPlane.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectPlane.getphongConst());
             }
@@ -94,9 +96,9 @@ color ray_color(const ray& r,
                 rColor+= plane_light[i].getObjectColor() * hitobjectPlane.getKd() * max(0.0,dot(Normal, lightDir));
                 rColor+= plane_light[i].getObjectColor() * hitobjectPlane.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
             }
+            rColor+=ka*ambient_Color;
+            rColor*=hitobjectPlane.getObjectColor();
         }
-        rColor+=ka*ambient_Color;
-        rColor*=hitobjectSphere.getObjectColor();
 
     }else{
         return color(0.99,0.99,0.99);
@@ -148,7 +150,7 @@ int main() {
     point_light.push_back(light);
 
     //Adding object Sphere
-    point3 center_sphere = point3(0,0,-5);
+    point3 center_sphere = point3(0,0,-2);
     double radius = 1;
     color colorSphere = color(0.8,0.4,0.4);
     double kd_sphere = 0.8;
@@ -166,14 +168,14 @@ int main() {
     sphere_object.push_back(sphere2);
 
     //Adding object Plane;
-    point3 center_plane = point3(0,0,-1.5);
-    vec3 Normal_plane = vec3(0,0,1);
-    vec3 Xmin = vec3(-1,-1,-2);
-    vec3 Xmax = vec3(1,1,-1);
+    point3 center_plane = point3(-10,-1,-1);
+    vec3 Normal_plane = vec3(0,1,0);
+    vec3 Xmin = vec3(-5,-10,-100);
+    vec3 Xmax = vec3(10,-0.5,0);
     double kd_plane = 0.8;
     double ks_plane = 0.5;
     double phongConst_plane = 0.9;
-    color color_plane = color(0.5,01,0.1);
+    color color_plane = color(0.4,0.4,0.4);
     Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,phongConst_plane,color_plane);
     plane_object.push_back(plane);
 
