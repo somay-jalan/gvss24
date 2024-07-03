@@ -22,10 +22,10 @@ color ray_color(const ray& r,
     Sphere hitobjectSphere;
     Plane hitobjectPlane;
     string check="None";
-    double t = INT_MAX;
+    double t = 1e8;;
     for(int i=0;i<sphere_object.size();i++){
         double temp_t = sphere_object[i].hit_sphere(r);
-        // if(temp_t!=INT_MAX) cout<<"i:"<<i<<" temp_t"<<temp_t<<endl;
+        // if(temp_t!=INT_MAX) cout<<"i:"<<i<<" temp_t"<<temp_t<<"||";
         if(temp_t<t){
             t =temp_t;
             hitobjectSphere = sphere_object[i];
@@ -45,7 +45,7 @@ color ray_color(const ray& r,
 
 
     color rColor = color(0,0,0);
-    if(t >0 and t!=INT_MAX) {
+    if(t >0 and t<1e8) {
         if(check=="Sphere"){
             point3 hitPt = r.at(t);
             for(int i=0;i<point_light.size();i++){
@@ -127,7 +127,7 @@ int main() {
     float focal_length = 1.0;
     float viewport_height = 2.0;
     float viewport_width = viewport_height * (double(image_width) / image_height);
-    point3 camera_center = point3(0,0,2);
+    point3 camera_center = point3(0,0,1);
 
     // Compute Vu and Vv
     vec3 viewport_u = vec3(viewport_width, 0, 0);
@@ -148,7 +148,7 @@ int main() {
     point_light.push_back(light);
 
     //Adding object Sphere
-    point3 center_sphere = point3(0,0,-2);
+    point3 center_sphere = point3(0,0,-5);
     double radius = 1;
     color colorSphere = color(0.8,0.4,0.4);
     double kd_sphere = 0.8;
@@ -166,16 +166,16 @@ int main() {
     sphere_object.push_back(sphere2);
 
     //Adding object Plane;
-    point3 center_plane = point3(0,0,1.5);
+    point3 center_plane = point3(0,0,-1.5);
     vec3 Normal_plane = vec3(0,0,1);
-    vec3 Xmin = vec3(-1,-1,1);
-    vec3 Xmax = vec3(1,1,2);
+    vec3 Xmin = vec3(-1,-1,-2);
+    vec3 Xmax = vec3(1,1,-1);
     double kd_plane = 0.8;
     double ks_plane = 0.5;
     double phongConst_plane = 0.9;
     color color_plane = color(0.5,01,0.1);
     Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,phongConst_plane,color_plane);
-    // plane_object.push_back(plane);
+    plane_object.push_back(plane);
 
     //Ambient Color or Light;
     color ambient_Color = color(1,1,1);
