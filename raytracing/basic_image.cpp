@@ -98,9 +98,18 @@ color ray_color(const ray& r,
             if(recDepth<maxDepth){
                 if(hitobjectSphere.getKd()==0 and hitobjectSphere.getKa()==0){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
-                    ray reflected = ray(hitPt+1e-6*Normal,r.direction()-2*dot(Normal,r.direction())*Normal);
+                    ray reflected = ray(hitPt+1e-6*(r.direction()-2*dot(Normal,r.direction())*Normal),r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
-                    rColor+=ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    rColor+=hitobjectSphere.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                }
+                if(hitobjectSphere.getRefIndex()>0){
+                    vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
+                    double relativeRef = hitobjectSphere.getRefIndex();
+                    vec3 Direction = (relativeRef*(dot(Normal,(-1)*r.direction()))-sqrt(1-(pow(relativeRef,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))))*Normal - relativeRef*(-1)*r.direction();
+                    hitobjectSphere.setRefIndex(1/relativeRef);
+                    ray reflected = ray(hitPt+1e-6*Direction,Direction);
+                    recDepth+=1;
+                    rColor+=hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
                 }
             }
             for(int i=0;i<point_light.size();i++){
@@ -150,7 +159,16 @@ color ray_color(const ray& r,
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
                     ray reflected = ray(hitPt+1e-6*Normal,r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
-                    rColor+=ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    rColor+=hitobjectPlane.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                }
+                if(hitobjectPlane.getRefIndex()>0){
+                    vec3 Normal = unit_vector(hitobjectPlane.getNormal());
+                    double relativeRef = hitobjectPlane.getRefIndex();
+                    vec3 Direction = (relativeRef*(dot(Normal,(-1)*r.direction()))-sqrt(1-(pow(relativeRef,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))))*Normal - relativeRef*(-1)*r.direction();
+                    hitobjectPlane.setRefIndex(1/relativeRef);
+                    ray reflected = ray(hitPt+1e-6*Direction,Direction);
+                    recDepth+=1;
+                    rColor+=hitobjectPlane.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
                 }
             }
             for(int i=0;i<point_light.size();i++){
@@ -211,7 +229,7 @@ int main() {
     // Image
 
     auto aspect_ratio = 16.0 / 9.0;
-    int image_width = 2000;
+    int image_width = 4000;
 
     // Calculate the image height, and ensure that it's at least 1.
     int image_height = int(image_width / aspect_ratio);
@@ -253,26 +271,35 @@ int main() {
     double kd_sphere = 0.0;
     double ks_sphere = 1;
     double ka_sphere = 0.0;
+    double kr_sphere = 1.0;
+    double kt_sphere = 1.0;
+    double refIndex_sphere = 0.0;
     double phongConst_sphere = 500;
-    Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,ka_sphere,phongConst_sphere,colorSphere);
+    Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,ka_sphere,kr_sphere,kt_sphere,refIndex_sphere,phongConst_sphere,colorSphere);
     sphere_object.push_back(sphere);
-    point3 center_sphere2 = point3(2,0,-2);
+    point3 center_sphere2 = point3(2,0,-2.5);
     double radius2 = 1;
     color colorSphere2 = color(0.596,0.960,0.709);
     double kd_sphere2 = 0.0;
-    double ks_sphere2 = 1;
+    double ks_sphere2 = 1.0;
     double ka_sphere2 = 0.0;
+    double kr_sphere2 = 1.0;
+    double kt_sphere2 = 1.0;
+    double refIndex_sphere2 = 0.0;
     double phongConst_sphere2 = 500;
-    Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,phongConst_sphere2,colorSphere2);
+    Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,kr_sphere2,kt_sphere2,refIndex_sphere2,phongConst_sphere2,colorSphere2);
     sphere_object.push_back(sphere2);
-    point3 center_sphere3 = point3(0,-1,0);
+    point3 center_sphere3 = point3(2,0,0);
     double radius3 = 0.75;
     color colorSphere3 = color(0.517,0.549,0.968);
     double kd_sphere3 = 0.0;
     double ks_sphere3 = 1;
     double ka_sphere3 = 0.0;
+    double kr_sphere3 = 0.5;
+    double kt_sphere3 = 1;
+    double refIndex_sphere3 = 0.5;
     double phongConst_sphere3 = 500;
-    Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,phongConst_sphere3,colorSphere3);
+    Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,kr_sphere3,kt_sphere3,refIndex_sphere3,phongConst_sphere3,colorSphere3);
     sphere_object.push_back(sphere3);
 
     //Adding object Plane;
@@ -283,16 +310,18 @@ int main() {
     double kd_plane = 0.8;
     double ks_plane = 0.5;
     double ka_plane = 0.5;
-
+    double kr_plane = 0.0;
+    double kt_plane = 0.0;
+    double refIndex_plane = 0.0;
     double phongConst_plane = 0.9;
     color color_plane = color(0.4,0.4,0.4);
-    Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,phongConst_plane,color_plane);
+    Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,kr_plane,kt_plane,refIndex_plane,phongConst_plane,color_plane);
     plane_object.push_back(plane);
 
     //Ambient Color or Light;
     color ambient_Color = color(1,1,1);
     // Render
-    int recDepth = 1;
+    int maxDepth = 5;
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     // i controls the columns and j controls the rows
@@ -305,7 +334,7 @@ int main() {
                 vec3 ray_direction = unit_vector(pixel_sample - camera_center); 
                 ray r(camera_center, ray_direction);
 
-                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,5);
+                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,1,maxDepth);
             write_color(std::cout, pixel_color);
         }
     }

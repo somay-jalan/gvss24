@@ -10,14 +10,18 @@ class Plane {
   public:
     Plane() {}
 
-    Plane(const point3& center, const vec3& Normal, const vec3& Xmin, const vec3& Xmax, const double Kd, const double Ks, const double Ka, const double phongConst,  const color& objColor) 
-    : center(center), Normal(Normal), Xmin(Xmin), Xmax(Xmax), Kd(Kd), Ks(Ks), Ka(Ka), phongConst(phongConst), objectColor(objColor) {}
+    Plane(const point3& center, const vec3& Normal, const vec3& Xmin, const vec3& Xmax, const double Kd, const double Ks, const double Ka, const double Kr, const double Kt, double refIndex, const double phongConst, const color& objColor) 
+    : center(center), Normal(Normal), Xmin(Xmin), Xmax(Xmax), Kd(Kd), Ks(Ks), Ka(Ka), Kr(Kr), Kt(Kt), refIndex(refIndex), phongConst(phongConst), objectColor(objColor) {}
 
     const point3& getCenter() const  { return center; }
     const vec3& getNormal() const { return Normal; }
     const double getKd() const { return Kd; }
     const double getKs() const { return Ks; }
     const double getKa() const { return Ka; }
+    const double getKr() const { return Kr; }
+    const double getKt() const { return Kt; }
+    const double getRefIndex() const { return refIndex; }
+    void setRefIndex(double newRefIndex) { refIndex = newRefIndex; }
     const double getphongConst() const { return phongConst; }
     const color& getObjectColor() const  { return objectColor; }
     
@@ -40,6 +44,9 @@ class Plane {
     double Kd;
     double Ks;
     double Ka;
+    double Kr;
+    double Kt;
+    double refIndex;
     double phongConst;
     vec3 Xmin;
     vec3 Xmax;
