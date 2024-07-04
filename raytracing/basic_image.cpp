@@ -74,7 +74,7 @@ color ray_color(const ray& r,
     for(int i=0;i<sphere_object.size();i++){
         double temp_t = sphere_object[i].hit_sphere(r);
         // if(temp_t!=INT_MAX) cout<<"i:"<<i<<" temp_t"<<temp_t<<"||";
-        if(temp_t<t and temp_t>0){
+        if(temp_t<t and temp_t>1e-3){
             t =temp_t;
             hitobjectSphere = sphere_object[i];
             check = "Sphere";
@@ -82,7 +82,7 @@ color ray_color(const ray& r,
     }
     for(int i=0;i<plane_object.size();i++){
         double temp_t = plane_object[i].hit_plane(r);
-        if(temp_t<t and temp_t>0){
+        if(temp_t<t and temp_t>1e-3){
             t =temp_t;
             hitobjectPlane = plane_object[i];
             check = "Plane";
@@ -92,13 +92,13 @@ color ray_color(const ray& r,
 
 
     color rColor = color(0,0,0);
-    if(t>0 and check!="None") {
+    if(t>1e-6 and check!="None") {
         if(check=="Sphere"){
             point3 hitPt = r.at(t);
             if(recDepth<maxDepth){
                 if(hitobjectSphere.getKd()==0 and hitobjectSphere.getKa()==0){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
-                    ray reflected = ray(hitPt,r.direction()-2*dot(Normal,r.direction())*Normal);
+                    ray reflected = ray(hitPt+1e-6*Normal,r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
                     rColor+=ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
                 }
@@ -107,7 +107,7 @@ color ray_color(const ray& r,
                 vec3 lightDir = unit_vector(point_light[i].getCenter() - hitPt);
                 double t = ((point_light[i].getCenter() - hitPt).x()/lightDir.x())+ ((point_light[i].getCenter() - hitPt).y()/lightDir.y())+  ((point_light[i].getCenter() - hitPt).z()/lightDir.z());
                 // cout << "t:"<<t<<endl;
-                ray shadow_ray = ray(hitPt,lightDir);
+                ray shadow_ray = ray(hitPt + 1e-6*lightDir,lightDir);
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     vec3 half = unit_vector(r.direction()*(-1)+lightDir);
@@ -119,7 +119,7 @@ color ray_color(const ray& r,
                 vec3 lightDir = unit_vector(sphere_light[i].getCenter() - hitPt);
                 double t = ((sphere_light[i].getCenter() - hitPt).x()/lightDir.x())+ ((sphere_light[i].getCenter() - hitPt).y()/lightDir.y())+  ((sphere_light[i].getCenter() - hitPt).z()/lightDir.z());
                 // cout << "t:"<<t<<endl;
-                ray shadow_ray = ray(hitPt,lightDir);
+                ray shadow_ray = ray(hitPt + 1e-6*lightDir,lightDir);
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     vec3 half = unit_vector(r.direction()+lightDir);
@@ -131,8 +131,8 @@ color ray_color(const ray& r,
                 vec3 lightDir = unit_vector(plane_light[i].getNormal() - hitPt);
                 double t = ((plane_light[i].getNormal() - hitPt).x()/lightDir.x())+ ((plane_light[i].getNormal() - hitPt).y()/lightDir.y())+  ((plane_light[i].getNormal() - hitPt).z()/lightDir.z());
                 // cout << "t:"<<t<<endl;
-                ray shadow_ray = ray(hitPt,lightDir);
-                if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
+                ray shadow_ray = ray(hitPt + 1e-6*lightDir,lightDir);
+                if(shadow_check(shadow_ray ,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     vec3 half = unit_vector(r.direction()+lightDir);
                     rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
@@ -148,7 +148,7 @@ color ray_color(const ray& r,
             if(recDepth<maxDepth){
                 if(hitobjectPlane.getKd()==0 and hitobjectPlane.getKa()==0){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
-                    ray reflected = ray(hitPt,r.direction()-2*dot(Normal,r.direction())*Normal);
+                    ray reflected = ray(hitPt+1e-6*Normal,r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
                     rColor+=ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
                 }
@@ -157,7 +157,7 @@ color ray_color(const ray& r,
                 vec3 lightDir = unit_vector(point_light[i].getCenter() - hitPt);
                 double t = ((point_light[i].getCenter() - hitPt).x()/lightDir.x())+ ((point_light[i].getCenter() - hitPt).y()/lightDir.y())+  ((point_light[i].getCenter() - hitPt).z()/lightDir.z());
                 // cout << "t:"<<t<<endl;
-                ray shadow_ray = ray(hitPt,lightDir);
+                ray shadow_ray = ray(hitPt+ 1e-6*lightDir,lightDir);
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
                     vec3 half = unit_vector(r.direction()*(-1)+lightDir);
@@ -169,7 +169,7 @@ color ray_color(const ray& r,
                 vec3 lightDir = unit_vector(sphere_light[i].getCenter() - hitPt);
                 double t = ((sphere_light[i].getCenter() - hitPt).x()/lightDir.x())+ ((sphere_light[i].getCenter() - hitPt).y()/lightDir.y())+  ((sphere_light[i].getCenter() - hitPt).z()/lightDir.z());
                 // cout << "t:"<<t<<endl;
-                ray shadow_ray = ray(hitPt,lightDir);
+                ray shadow_ray = ray(hitPt+ 1e-6*lightDir,lightDir);
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
                     vec3 half = unit_vector(r.direction()+lightDir);
@@ -181,7 +181,7 @@ color ray_color(const ray& r,
                 vec3 lightDir = unit_vector(plane_light[i].getNormal() - hitPt);
                 double t = ((plane_light[i].getNormal() - hitPt).x()/lightDir.x())+ ((plane_light[i].getNormal() - hitPt).y()/lightDir.y())+  ((plane_light[i].getNormal() - hitPt).z()/lightDir.z());
                 // cout << "t:"<<t<<endl;
-                ray shadow_ray = ray(hitPt,lightDir);
+                ray shadow_ray = ray(hitPt+ 1e-6*lightDir,lightDir);
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
                     vec3 half = unit_vector(r.direction()+lightDir);
@@ -211,7 +211,7 @@ int main() {
     // Image
 
     auto aspect_ratio = 16.0 / 9.0;
-    int image_width = 800;
+    int image_width = 2000;
 
     // Calculate the image height, and ensure that it's at least 1.
     int image_height = int(image_width / aspect_ratio);
@@ -279,7 +279,7 @@ int main() {
     point3 center_plane = point3(-10,-1,-1);
     vec3 Normal_plane = vec3(0,1,0);
     vec3 Xmin = vec3(-100,-5,-200);
-    vec3 Xmax = vec3(100,-0.5,10);
+    vec3 Xmax = vec3(100,-0.5,100);
     double kd_plane = 0.8;
     double ks_plane = 0.5;
     double ka_plane = 0.5;
@@ -305,7 +305,7 @@ int main() {
                 vec3 ray_direction = unit_vector(pixel_sample - camera_center); 
                 ray r(camera_center, ray_direction);
 
-                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,10);
+                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,5);
             write_color(std::cout, pixel_color);
         }
     }
