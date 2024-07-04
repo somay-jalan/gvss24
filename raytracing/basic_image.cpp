@@ -105,11 +105,16 @@ color ray_color(const ray& r,
                 if(hitobjectSphere.getRefIndex()>0){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     double relativeRef = hitobjectSphere.getRefIndex();
-                    vec3 Direction = (relativeRef*(dot(Normal,(-1)*r.direction()))-sqrt(1-(pow(relativeRef,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))))*Normal - relativeRef*(-1)*r.direction();
-                    hitobjectSphere.setRefIndex(1/relativeRef);
-                    ray reflected = ray(hitPt+1e-6*Direction,Direction);
-                    recDepth+=1;
-                    rColor+=hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    double Ro = pow((relativeRef-1)/(relativeRef+1),2);
+                    double refSchlick = Ro + (1-Ro)*(1-dot(Normal,(-1)*r.direction()));
+
+                    if(1-(pow(refSchlick,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))>0){
+                        vec3 Direction = (refSchlick*(dot(Normal,(-1)*r.direction()))-sqrt(1-(pow(refSchlick,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))))*Normal - refSchlick*(-1)*r.direction();
+                        hitobjectSphere.setRefIndex(1/relativeRef);
+                        ray reflected = ray(hitPt+1e-6*Direction,Direction);
+                        recDepth+=1;
+                        rColor+=hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    }
                 }
             }
             for(int i=0;i<point_light.size();i++){
@@ -164,11 +169,15 @@ color ray_color(const ray& r,
                 if(hitobjectPlane.getRefIndex()>0){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
                     double relativeRef = hitobjectPlane.getRefIndex();
-                    vec3 Direction = (relativeRef*(dot(Normal,(-1)*r.direction()))-sqrt(1-(pow(relativeRef,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))))*Normal - relativeRef*(-1)*r.direction();
-                    hitobjectPlane.setRefIndex(1/relativeRef);
-                    ray reflected = ray(hitPt+1e-6*Direction,Direction);
-                    recDepth+=1;
-                    rColor+=hitobjectPlane.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    double Ro = pow((relativeRef-1)/(relativeRef+1),2);
+                    double refSchlick = Ro + (1-Ro)*(1-dot(Normal,(-1)*r.direction()));
+                    if(1-(pow(refSchlick,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))>0){
+                        vec3 Direction = (refSchlick*(dot(Normal,(-1)*r.direction()))-sqrt(1-(pow(refSchlick,2)*(1-pow((dot(Normal,(-1)*r.direction())),2)))))*Normal - refSchlick*(-1)*r.direction();
+                        hitobjectPlane.setRefIndex(1/relativeRef);
+                        ray reflected = ray(hitPt+1e-6*Direction,Direction);
+                        recDepth+=1;
+                        rColor+=hitobjectPlane.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    }
                 }
             }
             for(int i=0;i<point_light.size();i++){
@@ -331,7 +340,7 @@ int main() {
     double phongConst_plane2 = 0.9;
     color color_plane2 = color(0.5,0.5,0.5);
     Plane plane2 = Plane(center_plane2,Normal_plane2,Xmin2,Xmax2,kd_plane2,ks_plane2,ka_plane2,kr_plane2,kt_plane2,refIndex_plane2,phongConst_plane2,color_plane2);
-    plane_object.push_back(plane2);
+    // plane_object.push_back(plane2);
 
     //Ambient Color or Light;
     color ambient_Color = color(0.5,0.5,0.5);
