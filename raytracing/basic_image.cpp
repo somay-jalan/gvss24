@@ -94,7 +94,8 @@ color ray_color(const ray& r,
     vector<Sphere> &sphere_object,
     color &ambient_Color,
     int recDepth,
-    int maxDepth) {
+    int maxDepth,
+    Texture &background) {
     
     Sphere hitobjectSphere;
     Plane hitobjectPlane;
@@ -167,7 +168,7 @@ color ray_color(const ray& r,
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     ray reflected = ray(hitPt+1e-6*(r.direction()-2*dot(Normal,r.direction())*Normal),r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
-                    rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth,background);
                 }
                 if(hitobjectSphere.getRefIndex()>0){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
@@ -179,7 +180,7 @@ color ray_color(const ray& r,
                         hitobjectSphere.setRefIndex(1/relativeRef);
                         ray reflected = ray(hitPt+1e-6*Direction,Direction);
                         recDepth+=1;
-                        rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                        rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth,background);
                     }
                 }
             }
@@ -238,7 +239,7 @@ color ray_color(const ray& r,
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
                     ray reflected = ray(hitPt+1e-6*Normal,r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
-                    rColor+=hitobjectPlane.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    rColor+=hitobjectPlane.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth,background);
                 }
                 if(hitobjectPlane.getRefIndex()>0){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
@@ -250,7 +251,7 @@ color ray_color(const ray& r,
                         hitobjectPlane.setRefIndex(1/relativeRef);
                         ray reflected = ray(hitPt+1e-6*Direction,Direction);
                         recDepth+=1;
-                        rColor+=hitobjectPlane.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                        rColor+=hitobjectPlane.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth,background);
                     }
                 }
             }
@@ -322,6 +323,16 @@ color ray_color(const ray& r,
         }
 
     }else{
+        if(background.getTexture()!=nullptr){
+            // Calculate UV coordinates for the hit point on the sphere
+            vec3 normal = unit_vector(r.direction()-vec3(0,0,-1));
+            double u = 0.5 + atan2(normal.z(), normal.x()) / (2 * M_PI);
+            double v = 0.5 - asin(normal.y()) / M_PI;
+
+            color texture_color = get_texture_color(u, v,background.getTexture(),background.getTexture_width(),background.getTexture_height(),background.getChannels());
+            rColor = texture_color;  // Apply texture color
+            return rColor;
+        }
         return color(0.882,0.962,1);
     }
 
@@ -351,6 +362,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
     Texture texture_sun = Texture(texture_sun_Data,texture_width_sun,texture_height_sun,channels_sun);
+    int texture_width_bg, texture_height_bg, channels_bg;
+    unsigned char *texture_bg_Data = nullptr;
+    texture_bg_Data = stbi_load("../dikhololo_night_2k.hdr", &texture_width_bg, &texture_height_bg, &channels_bg, 0);
+    if (!texture_bg_Data) {
+        cerr << "Failed to load texture image." << endl;
+        exit(EXIT_FAILURE);
+    }
+    Texture texture_bg = Texture(texture_bg_Data,texture_width_bg,texture_height_bg,channels_bg);
     Texture texture_empty = Texture(nullptr,0,0,0);
 
     // Image
@@ -475,6 +494,8 @@ int main() {
     Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,kr_plane,kt_plane,refIndex_plane,phongConst_plane,color_plane,texture_empty);
     plane_object.push_back(plane);
 
+ 
+
     point3 center_plane2 = point3(0,0,0);
     vec3 Normal_plane2 = vec3(1,0,1);
     vec3 Xmin2 = vec3(-1,-1,-2);
@@ -506,7 +527,7 @@ int main() {
                 vec3 ray_direction = unit_vector(pixel_sample - camera_center); 
                 ray r(camera_center, ray_direction);
 
-                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,1,maxDepth);
+                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,1,maxDepth,texture_bg);
             write_color(std::cout, pixel_color);
         }
     }
