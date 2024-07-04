@@ -3,6 +3,7 @@
 
 #include "vec3.h"
 #include "color.h"
+#include <climits>
 
 
 
@@ -22,7 +23,7 @@ class PointLight {
             return ((oc.x()/r.direction().x())+(oc.y()+r.direction().y())+(oc.z()+r.direction().z()));
         }
         else
-            return -1;
+            return INT_MAX;
     }
   private:
     point3 center;
