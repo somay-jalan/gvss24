@@ -170,8 +170,8 @@ int main() {
     //Adding object Plane;
     point3 center_plane = point3(-10,-1,-1);
     vec3 Normal_plane = vec3(0,1,0);
-    vec3 Xmin = vec3(-5,-10,-100);
-    vec3 Xmax = vec3(10,-0.5,0);
+    vec3 Xmin = vec3(-100,-5,-200);
+    vec3 Xmax = vec3(100,-0.5,0);
     double kd_plane = 0.8;
     double ks_plane = 0.5;
     double phongConst_plane = 0.9;
