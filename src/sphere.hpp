@@ -11,13 +11,14 @@ class Sphere {
   public:
     Sphere() {}
 
-    Sphere(const point3& center, const double radius, const double Kd, const double Ks, const double phongConst, const color& objColor) : center(center), radius(radius), Kd(Kd), Ks(Ks), phongConst(phongConst), objectColor(objColor) {}
+    Sphere(const point3& center, const double radius, const double Kd, const double Ks, const double Ka, const double phongConst, const color& objColor) : center(center), radius(radius), Kd(Kd), Ks(Ks), Ka(Ka), phongConst(phongConst), objectColor(objColor) {}
     Sphere(const point3& center, const double radius, const double Kd, const color& objColor) : center(center), radius(radius), Kd(Kd), objectColor(objColor) {}
 
     const point3& getCenter() const  { return center; }
     const double getRadius() const { return radius; }
     const double getKd() const { return Kd; }
     const double getKs() const { return Ks; }
+    const double getKa() const { return Ka; }
     const double getphongConst() const { return phongConst; }
     const color& getObjectColor() const  { return objectColor; }
 
@@ -40,6 +41,7 @@ class Sphere {
     color objectColor;
     double Kd;
     double Ks;
+    double Ka;
     double phongConst;
 
 };

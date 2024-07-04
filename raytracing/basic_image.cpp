@@ -16,8 +16,7 @@ color ray_color(const ray& r,
     vector<Plane> &plane_light,
     vector<Plane> &plane_object,
     vector<Sphere> &sphere_object,
-    color &ambient_Color,
-    double ka) {
+    color &ambient_Color) {
     
     Sphere hitobjectSphere;
     Plane hitobjectPlane;
@@ -69,7 +68,7 @@ color ray_color(const ray& r,
                 rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
                 rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
             }
-            rColor+=ka*ambient_Color;
+            rColor+=hitobjectSphere.getKa()*ambient_Color;
             rColor*=hitobjectSphere.getObjectColor();
 
         }else if(check=="Plane"){
@@ -96,7 +95,7 @@ color ray_color(const ray& r,
                 rColor+= plane_light[i].getObjectColor() * hitobjectPlane.getKd() * max(0.0,dot(Normal, lightDir));
                 rColor+= plane_light[i].getObjectColor() * hitobjectPlane.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
             }
-            rColor+=ka*ambient_Color;
+            rColor+=hitobjectPlane.getKa()*ambient_Color;
             rColor*=hitobjectPlane.getObjectColor();
         }
 
@@ -126,10 +125,10 @@ int main() {
     image_height = (image_height < 1) ? 1 : image_height;
     
     // Camera
-    float focal_length = 1.0;
+    float focal_length = 5;
     float viewport_height = 2.0;
     float viewport_width = viewport_height * (double(image_width) / image_height);
-    point3 camera_center = point3(0,0,1);
+    point3 camera_center = point3(0,0,10);
 
     // Compute Vu and Vv
     vec3 viewport_u = vec3(viewport_width, 0, 0);
@@ -150,38 +149,50 @@ int main() {
     point_light.push_back(light);
 
     //Adding object Sphere
-    point3 center_sphere = point3(0,0,-2);
+    point3 center_sphere = point3(-2,0,-2);
     double radius = 1;
     color colorSphere = color(0.8,0.4,0.4);
     double kd_sphere = 0.8;
     double ks_sphere = 0.5;
+    double ka_sphere = 0.1;
     double phongConst_sphere = 0.9;
-    Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,phongConst_sphere,colorSphere);
+    Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,ka_sphere,phongConst_sphere,colorSphere);
     sphere_object.push_back(sphere);
-    point3 center_sphere2 = point3(2,2,-3);
+    point3 center_sphere2 = point3(2,0,-2);
     double radius2 = 1;
     color colorSphere2 = color(0.4,0.4,0.4);
     double kd_sphere2 = 0.8;
     double ks_sphere2 = 0.5;
+    double ka_sphere2 = 0.5;
     double phongConst_sphere2 = 0.9;
-    Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,phongConst_sphere2,colorSphere2);
+    Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,phongConst_sphere2,colorSphere2);
     sphere_object.push_back(sphere2);
+    point3 center_sphere3 = point3(0,-1,3);
+    double radius3 = 0.75;
+    color colorSphere3 = color(0.4,0.4,0.4);
+    double kd_sphere3 = 0.8;
+    double ks_sphere3 = 0.5;
+    double ka_sphere3 = 0.0;
+    double phongConst_sphere3 = 0.9;
+    Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,phongConst_sphere3,colorSphere3);
+    sphere_object.push_back(sphere3);
 
     //Adding object Plane;
     point3 center_plane = point3(-10,-1,-1);
     vec3 Normal_plane = vec3(0,1,0);
     vec3 Xmin = vec3(-100,-5,-200);
-    vec3 Xmax = vec3(100,-0.5,0);
+    vec3 Xmax = vec3(100,-0.5,10);
     double kd_plane = 0.8;
     double ks_plane = 0.5;
+    double ka_plane = 0.0;
+
     double phongConst_plane = 0.9;
     color color_plane = color(0.4,0.4,0.4);
-    Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,phongConst_plane,color_plane);
+    Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,phongConst_plane,color_plane);
     plane_object.push_back(plane);
 
     //Ambient Color or Light;
     color ambient_Color = color(1,1,1);
-    double ka = 0.1; 
     // Render
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -195,7 +206,7 @@ int main() {
                 vec3 ray_direction = unit_vector(pixel_sample - camera_center); 
                 ray r(camera_center, ray_direction);
 
-                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,ka);
+                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color);
             write_color(std::cout, pixel_color);
         }
     }
