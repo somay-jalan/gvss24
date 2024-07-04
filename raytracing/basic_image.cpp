@@ -289,15 +289,15 @@ int main() {
     double phongConst_sphere2 = 500;
     Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,kr_sphere2,kt_sphere2,refIndex_sphere2,phongConst_sphere2,colorSphere2);
     sphere_object.push_back(sphere2);
-    point3 center_sphere3 = point3(2,0,0);
-    double radius3 = 0.75;
+    point3 center_sphere3 = point3(1,0,0);
+    double radius3 = 0.5;
     color colorSphere3 = color(0.517,0.549,0.968);
     double kd_sphere3 = 0.0;
     double ks_sphere3 = 1;
     double ka_sphere3 = 0.0;
     double kr_sphere3 = 0.5;
     double kt_sphere3 = 1;
-    double refIndex_sphere3 = 0.5;
+    double refIndex_sphere3 = 0.25;
     double phongConst_sphere3 = 500;
     Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,kr_sphere3,kt_sphere3,refIndex_sphere3,phongConst_sphere3,colorSphere3);
     sphere_object.push_back(sphere3);
@@ -321,7 +321,7 @@ int main() {
     //Ambient Color or Light;
     color ambient_Color = color(1,1,1);
     // Render
-    int maxDepth = 5;
+    int maxDepth = 3900;
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     // i controls the columns and j controls the rows
