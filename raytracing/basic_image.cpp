@@ -212,7 +212,7 @@ color ray_color(const ray& r,
         }
 
     }else{
-        return color(0.99,0.99,0.99);
+        return color(0.882,0.962,1);
     }
 
 
@@ -318,10 +318,25 @@ int main() {
     Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,kr_plane,kt_plane,refIndex_plane,phongConst_plane,color_plane);
     plane_object.push_back(plane);
 
+    point3 center_plane2 = point3(0,0,0);
+    vec3 Normal_plane2 = vec3(1,0,1);
+    vec3 Xmin2 = vec3(-1,-1,-2);
+    vec3 Xmax2 = vec3(1,1,2);
+    double kd_plane2 = 0.0;
+    double ks_plane2 = 0.5;
+    double ka_plane2 = 0.0;
+    double kr_plane2 = 1.0;
+    double kt_plane2 = 0.5;
+    double refIndex_plane2 = 0.9;
+    double phongConst_plane2 = 0.9;
+    color color_plane2 = color(0.5,0.5,0.5);
+    Plane plane2 = Plane(center_plane2,Normal_plane2,Xmin2,Xmax2,kd_plane2,ks_plane2,ka_plane2,kr_plane2,kt_plane2,refIndex_plane2,phongConst_plane2,color_plane2);
+    plane_object.push_back(plane2);
+
     //Ambient Color or Light;
-    color ambient_Color = color(1,1,1);
+    color ambient_Color = color(0.5,0.5,0.5);
     // Render
-    int maxDepth = 3900;
+    int maxDepth = 39;
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     // i controls the columns and j controls the rows
