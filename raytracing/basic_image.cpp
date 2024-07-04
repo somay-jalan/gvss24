@@ -193,7 +193,7 @@ color ray_color(const ray& r,
             rColor*=hitobjectPlane.getObjectColor();
         }
 
-    }else if(check=="None"){
+    }else{
         return color(0.99,0.99,0.99);
     }
 
@@ -249,7 +249,7 @@ int main() {
     //Adding object Sphere
     point3 center_sphere = point3(-2,1,-2);
     double radius = 1;
-    color colorSphere = color(1,0.0,0.0);
+    color colorSphere = color(0.6,0.5,0.5);
     double kd_sphere = 0.5;
     double ks_sphere = 1;
     double ka_sphere = 0.3;
@@ -258,7 +258,7 @@ int main() {
     sphere_object.push_back(sphere);
     point3 center_sphere2 = point3(2,0,-2);
     double radius2 = 1;
-    color colorSphere2 = color(0.0,0.6,0.0);
+    color colorSphere2 = color(0.5,0.6,0.5);
     double kd_sphere2 = 0.0;
     double ks_sphere2 = 1;
     double ka_sphere2 = 0.0;
@@ -267,7 +267,7 @@ int main() {
     sphere_object.push_back(sphere2);
     point3 center_sphere3 = point3(0,-1,0);
     double radius3 = 0.75;
-    color colorSphere3 = color(0.0,0.0,0.6);
+    color colorSphere3 = color(0.5,0.5,0.6);
     double kd_sphere3 = 0.0;
     double ks_sphere3 = 1;
     double ka_sphere3 = 0.0;
@@ -305,7 +305,7 @@ int main() {
                 vec3 ray_direction = unit_vector(pixel_sample - camera_center); 
                 ray r(camera_center, ray_direction);
 
-                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,3);
+                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,2);
             write_color(std::cout, pixel_color);
         }
     }
