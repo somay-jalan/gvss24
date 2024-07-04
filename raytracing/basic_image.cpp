@@ -16,7 +16,8 @@ color ray_color(const ray& r,
     vector<Plane> &plane_light,
     vector<Plane> &plane_object,
     vector<Sphere> &sphere_object,
-    color &ambient_Color) {
+    color &ambient_Color,
+    double recDepth) {
     
     Sphere hitobjectSphere;
     Plane hitobjectPlane;
@@ -143,7 +144,7 @@ int main() {
     point3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
     //Adding point light
-    point3 clight = point3(10,10,10);
+    point3 clight = point3(100,100,100);
     color colorLight = color(1,1,1);
     PointLight light = PointLight(clight,colorLight);
     point_light.push_back(light);
@@ -151,29 +152,29 @@ int main() {
     //Adding object Sphere
     point3 center_sphere = point3(-2,0,-2);
     double radius = 1;
-    color colorSphere = color(0.8,0.4,0.4);
-    double kd_sphere = 0.8;
-    double ks_sphere = 0.5;
-    double ka_sphere = 0.1;
-    double phongConst_sphere = 0.9;
+    color colorSphere = color(0.6,0.0,0.0);
+    double kd_sphere = 0.0;
+    double ks_sphere = 1;
+    double ka_sphere = 0.0;
+    double phongConst_sphere = 1000;
     Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,ka_sphere,phongConst_sphere,colorSphere);
     sphere_object.push_back(sphere);
     point3 center_sphere2 = point3(2,0,-2);
     double radius2 = 1;
-    color colorSphere2 = color(0.4,0.4,0.4);
-    double kd_sphere2 = 0.8;
-    double ks_sphere2 = 0.5;
-    double ka_sphere2 = 0.5;
-    double phongConst_sphere2 = 0.9;
+    color colorSphere2 = color(0.0,0.6,0.0);
+    double kd_sphere2 = 0.0;
+    double ks_sphere2 = 1;
+    double ka_sphere2 = 0.0;
+    double phongConst_sphere2 = 1000;
     Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,phongConst_sphere2,colorSphere2);
     sphere_object.push_back(sphere2);
     point3 center_sphere3 = point3(0,-1,3);
     double radius3 = 0.75;
-    color colorSphere3 = color(0.4,0.4,0.4);
-    double kd_sphere3 = 0.8;
-    double ks_sphere3 = 0.5;
+    color colorSphere3 = color(0.0,0.0,0.6);
+    double kd_sphere3 = 0.0;
+    double ks_sphere3 = 1;
     double ka_sphere3 = 0.0;
-    double phongConst_sphere3 = 0.9;
+    double phongConst_sphere3 = 1000;
     Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,phongConst_sphere3,colorSphere3);
     sphere_object.push_back(sphere3);
 
@@ -194,6 +195,7 @@ int main() {
     //Ambient Color or Light;
     color ambient_Color = color(1,1,1);
     // Render
+    double recDepth = 1;
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     // i controls the columns and j controls the rows
@@ -206,7 +208,7 @@ int main() {
                 vec3 ray_direction = unit_vector(pixel_sample - camera_center); 
                 ray r(camera_center, ray_direction);
 
-                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color);
+                auto pixel_color = ray_color(r,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth);
             write_color(std::cout, pixel_color);
         }
     }
