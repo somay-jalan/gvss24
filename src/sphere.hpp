@@ -4,14 +4,14 @@
 #include "vec3.h"
 #include "color.h"
 #include <climits>
-
+#include "texture.hpp"
 
 
 class Sphere {
   public:
     Sphere() {}
 
-    Sphere(const point3& center, const double radius, const double Kd, const double Ks, const double Ka, const double Kr, const double Kt, double refIndex, const double phongConst, const color& objColor) : center(center), radius(radius), Kd(Kd), Ks(Ks), Ka(Ka), Kr(Kr), Kt(Kt),refIndex(refIndex), phongConst(phongConst), objectColor(objColor) {}
+    Sphere(const point3& center, const double radius, const double Kd, const double Ks, const double Ka, const double Kr, const double Kt, double refIndex, const double phongConst, const color& objColor, const Texture& objTexture) : center(center), radius(radius), Kd(Kd), Ks(Ks), Ka(Ka), Kr(Kr), Kt(Kt),refIndex(refIndex), phongConst(phongConst), objectColor(objColor), objTexture(objTexture) {}
     Sphere(const point3& center, const double radius, const double Kd, const color& objColor) : center(center), radius(radius), Kd(Kd), objectColor(objColor) {}
 
     const point3& getCenter() const  { return center; }
@@ -25,6 +25,8 @@ class Sphere {
     void setRefIndex(double newRefIndex) { refIndex = newRefIndex; }
     const double getphongConst() const { return phongConst; }
     const color& getObjectColor() const  { return objectColor; }
+    const Texture& getObjectTexture() const  { return objTexture; }
+
 
     
     double hit_sphere(const ray& r) {
@@ -50,7 +52,7 @@ class Sphere {
     double Kt;
     double refIndex;
     double phongConst;
-
+    Texture objTexture;
 };
 
 #endif

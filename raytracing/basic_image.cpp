@@ -5,6 +5,8 @@
 #include "../src/sphere.hpp"
 #include "../src/plane.hpp"
 #include "../src/pointLight.hpp"
+#include "../src/texture.hpp"
+
 #include "../src/stb_image.h"
 
 #include<bits/stdc++.h>
@@ -13,21 +15,11 @@
 using namespace std;
 //THIS SECTION OF CODE HAS BEEN TAKEN WITH THE HELP OF GPT
 //.--------------------------------------------------------------------------
-int texture_width, texture_height, channels;
-unsigned char *texture_image = nullptr;
 
-void load_texture() {
-    // Load texture image from file
-    texture_image = stbi_load("../texture.png", &texture_width, &texture_height, &channels, 0);
-    if (!texture_image) {
-        cerr << "Failed to load texture image." << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-color get_texture_color(double u, double v) {
-    if (!texture_image) {
+color get_texture_color(double u, double v, unsigned char *texture, int texture_width, int texture_height, int channels) {
+    if (!texture) {
         cerr << "Texture image not loaded." << endl;
-        return color(1, 1, 1); // Default color if texture not loaded
+        return color(0, 0, 0); // Default color if texture not loaded
     }
 
     int i = min(max(int(u * texture_width), 0), texture_width - 1);
@@ -35,9 +27,9 @@ color get_texture_color(double u, double v) {
 
     // Assuming each pixel is 3 channels (RGB)
     int pixel_index = (j * texture_width + i) * channels;
-    double r = texture_image[pixel_index] / 255.0;
-    double g = texture_image[pixel_index + 1] / 255.0;
-    double b = texture_image[pixel_index + 2] / 255.0;
+    double r = texture[pixel_index] / 255.0;
+    double g = texture[pixel_index + 1] / 255.0;
+    double b = texture[pixel_index + 2] / 255.0;
 
     return color(r, g, b);
 }
@@ -160,20 +152,22 @@ color ray_color(const ray& r,
     if(t>1e-6 and check!="None") {
         if(check=="Sphere"){
             point3 hitPt = r.at(t);
-            // Calculate UV coordinates for the hit point on the sphere
-            vec3 normal = unit_vector(hitPt - hitobjectSphere.getCenter());
-            double u = 0.5 + atan2(normal.z(), normal.x()) / (2 * M_PI);
-            double v = 0.5 - asin(normal.y()) / M_PI;
+            if(hitobjectSphere.getObjectTexture().getTexture()!=nullptr){
+                // Calculate UV coordinates for the hit point on the sphere
+                vec3 normal = unit_vector(hitPt - hitobjectSphere.getCenter());
+                double u = 0.5 + atan2(normal.z(), normal.x()) / (2 * M_PI);
+                double v = 0.5 - asin(normal.y()) / M_PI;
 
-            color texture_color = get_texture_color(u, v);
-            rColor = texture_color;  // Apply texture color
+                color texture_color = get_texture_color(u, v,hitobjectSphere.getObjectTexture().getTexture(),hitobjectSphere.getObjectTexture().getTexture_width(),hitobjectSphere.getObjectTexture().getTexture_height(),hitobjectSphere.getObjectTexture().getChannels());
+                rColor = texture_color;  // Apply texture color
+            }
 
             if(recDepth<maxDepth){
                 if(hitobjectSphere.getKd()==0 and hitobjectSphere.getKa()==0){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     ray reflected = ray(hitPt+1e-6*(r.direction()-2*dot(Normal,r.direction())*Normal),r.direction()-2*dot(Normal,r.direction())*Normal);
                     recDepth+=1;
-                    rColor+=hitobjectSphere.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                    rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKr()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
                 }
                 if(hitobjectSphere.getRefIndex()>0){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
@@ -185,7 +179,7 @@ color ray_color(const ray& r,
                         hitobjectSphere.setRefIndex(1/relativeRef);
                         ray reflected = ray(hitPt+1e-6*Direction,Direction);
                         recDepth+=1;
-                        rColor+=hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
+                        rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKt()*ray_color(reflected,point_light,sphere_light,plane_light,plane_object,sphere_object,ambient_Color,recDepth,maxDepth);
                     }
                 }
             }
@@ -197,8 +191,8 @@ color ray_color(const ray& r,
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     vec3 half = unit_vector(r.direction()*(-1)+lightDir);
-                    rColor+= point_light[i].getLightColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
-                    rColor+= point_light[i].getLightColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
+                    rColor+= hitobjectSphere.getObjectColor()* point_light[i].getLightColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
+                    rColor+= hitobjectSphere.getObjectColor()*point_light[i].getLightColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
                 }
             }
             for(int i=0;i<sphere_light.size();i++){
@@ -209,8 +203,8 @@ color ray_color(const ray& r,
                 if(shadow_check(shadow_ray,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     vec3 half = unit_vector(r.direction()+lightDir);
-                    rColor+= sphere_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
-                    rColor+= sphere_light[i].getObjectColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
+                    rColor+= hitobjectSphere.getObjectColor()*sphere_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
+                    rColor+= hitobjectSphere.getObjectColor()*sphere_light[i].getObjectColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
                 }
             }
             for(int i=0;i<plane_light.size();i++){
@@ -221,16 +215,24 @@ color ray_color(const ray& r,
                 if(shadow_check(shadow_ray ,point_light,sphere_light,plane_light,plane_object,sphere_object,t)){
                     vec3 Normal = unit_vector(hitPt - hitobjectSphere.getCenter());
                     vec3 half = unit_vector(r.direction()+lightDir);
-                    rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
-                    rColor+= plane_light[i].getObjectColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
+                    rColor+= hitobjectSphere.getObjectColor()*plane_light[i].getObjectColor() * hitobjectSphere.getKd() * max(0.0,dot(Normal, lightDir));
+                    rColor+= hitobjectSphere.getObjectColor()*plane_light[i].getObjectColor() * hitobjectSphere.getKs() * pow(max(0.0,dot(Normal, half)),hitobjectSphere.getphongConst());
                 }
             }
-            rColor+=hitobjectSphere.getKa()*ambient_Color;
-            rColor*=hitobjectSphere.getObjectColor();
+            rColor+=hitobjectSphere.getObjectColor()*hitobjectSphere.getKa()*ambient_Color;
 
         }else if(check=="Plane"){
             // cout <<"t:"<< t<<endl;
             point3 hitPt = r.at(t);
+            if(hitobjectPlane.getObjectTexture().getTexture()!=nullptr){
+                // Calculate UV coordinates for the hit point on the sphere
+                vec3 normal = unit_vector(hitobjectPlane.getNormal());
+                double u = 0.5 + atan2(normal.z(), normal.x()) / (2 * M_PI);
+                double v = 0.5 - asin(normal.y()) / M_PI;
+
+                color texture_color = get_texture_color(u, v,hitobjectPlane.getObjectTexture().getTexture(),hitobjectPlane.getObjectTexture().getTexture_width(),hitobjectPlane.getObjectTexture().getTexture_height(),hitobjectPlane.getObjectTexture().getChannels());
+                rColor = texture_color;  // Apply texture color
+            }
             if(recDepth<maxDepth){
                 if(hitobjectPlane.getKd()==0 and hitobjectPlane.getKa()==0){
                     vec3 Normal = unit_vector(hitobjectPlane.getNormal());
@@ -291,9 +293,30 @@ color ray_color(const ray& r,
             rColor+=hitobjectPlane.getKa()*ambient_Color;
             rColor*=hitobjectPlane.getObjectColor();
         }else if(check=="PlaneLight"){
-            return hitobjectPlane.getObjectColor();
+            point3 hitPt = r.at(t);
+            if(hitobjectPlane.getObjectTexture().getTexture()!=nullptr){
+                // Calculate UV coordinates for the hit point on the sphere
+                vec3 normal = unit_vector(hitobjectPlane.getNormal());
+                double u = 0.5 + atan2(normal.z(), normal.x()) / (2 * M_PI);
+                double v = 0.5 - asin(normal.y()) / M_PI;
+
+                color texture_color = get_texture_color(u, v,hitobjectPlane.getObjectTexture().getTexture(),hitobjectPlane.getObjectTexture().getTexture_width(),hitobjectPlane.getObjectTexture().getTexture_height(),hitobjectPlane.getObjectTexture().getChannels());
+                rColor = texture_color;  // Apply texture color
+            }
+            return rColor+hitobjectPlane.getObjectColor();
         }else if(check=="SphereLight"){
-            return hitobjectSphere.getObjectColor();
+            point3 hitPt = r.at(t);
+            if(hitobjectSphere.getObjectTexture().getTexture()!=nullptr){
+                // Calculate UV coordinates for the hit point on the sphere
+                vec3 normal = unit_vector(hitPt - hitobjectSphere.getCenter());
+                double u = 0.5 + atan2(normal.z(), normal.x()) / (2 * M_PI);
+                double v = 0.5 - asin(normal.y()) / M_PI;
+
+                color texture_color = get_texture_color(u, v,hitobjectSphere.getObjectTexture().getTexture(),hitobjectSphere.getObjectTexture().getTexture_width(),hitobjectSphere.getObjectTexture().getTexture_height(),hitobjectSphere.getObjectTexture().getChannels());
+                rColor = texture_color;  // Apply texture color
+            }
+
+            return rColor + hitobjectSphere.getObjectColor();
         }else if(check=="PointLight"){
             return hitLightPoint.getLightColor();
         }
@@ -312,8 +335,24 @@ int main() {
     vector<Plane> plane_light;
     vector<Plane> plane_object;
     vector<Sphere> sphere_object;
-    // load_texture();
-    vector<vector<color>> texture_image; 
+    int texture_width_moon, texture_height_moon, channels_moon;
+    unsigned char *texture_moon_Data = nullptr;
+    texture_moon_Data = stbi_load("../moon_texture.png", &texture_width_moon, &texture_height_moon, &channels_moon, 0);
+    if (!texture_moon_Data) {
+        cerr << "Failed to load texture image." << endl;
+        exit(EXIT_FAILURE);
+    }
+    Texture texture_moon = Texture(texture_moon_Data,texture_width_moon,texture_height_moon,channels_moon);
+    int texture_width_sun, texture_height_sun, channels_sun;
+    unsigned char *texture_sun_Data = nullptr;
+    texture_sun_Data = stbi_load("../sun_texture.png", &texture_width_sun, &texture_height_sun, &channels_sun, 0);
+    if (!texture_sun_Data) {
+        cerr << "Failed to load texture image." << endl;
+        exit(EXIT_FAILURE);
+    }
+    Texture texture_sun = Texture(texture_sun_Data,texture_width_sun,texture_height_sun,channels_sun);
+    Texture texture_empty = Texture(nullptr,0,0,0);
+
     // Image
 
     auto aspect_ratio = 16.0 / 9.0;
@@ -350,7 +389,7 @@ int main() {
     //Adding sphere light
     point3 center_sphereLight = point3(0,0,-1);
     double radiusLight = 1;
-    color colorSphereLight = color(1,1,0);
+    color colorSphereLight = color(0.0,0.0,0);
     double kd_sphereLight = 0.0;
     double ks_sphereLight = 0;
     double ka_sphereLight = 0.0;
@@ -358,7 +397,7 @@ int main() {
     double kt_sphereLight = 0.0;
     double refIndex_sphereLight = 0.0;
     double phongConst_sphereLight = 0;
-    Sphere sphereLight = Sphere(center_sphereLight,radiusLight,kd_sphereLight,ks_sphereLight,ka_sphereLight,kr_sphereLight,kt_sphereLight,refIndex_sphereLight,phongConst_sphereLight,colorSphereLight);
+    Sphere sphereLight = Sphere(center_sphereLight,radiusLight,kd_sphereLight,ks_sphereLight,ka_sphereLight,kr_sphereLight,kt_sphereLight,refIndex_sphereLight,phongConst_sphereLight,colorSphereLight,texture_sun);
     sphere_light.push_back(sphereLight);
 
     //Adding plane light
@@ -374,7 +413,7 @@ int main() {
     double refIndex_planeLight = 0.0;
     double phongConst_planeLight = 0.0;
     color color_planeLight = color(1,1,1);
-    Plane planeLight = Plane(center_planeLight,Normal_planeLight,XminLight,XmaxLight,kd_planeLight,ks_planeLight,ka_planeLight,kr_planeLight,kt_planeLight,refIndex_planeLight,phongConst_planeLight,color_planeLight);
+    Plane planeLight = Plane(center_planeLight,Normal_planeLight,XminLight,XmaxLight,kd_planeLight,ks_planeLight,ka_planeLight,kr_planeLight,kt_planeLight,refIndex_planeLight,phongConst_planeLight,color_planeLight,texture_empty);
     // plane_light.push_back(planeLight);
 
     point3 clight2 = point3(10,5,0);;
@@ -386,38 +425,38 @@ int main() {
     point3 center_sphere = point3(-2,1,-2);
     double radius = 1;
     color colorSphere = color(0.9254,0.64,0.729);
-    double kd_sphere = 0.0;
+    double kd_sphere = 0.5;
     double ks_sphere = 1;
-    double ka_sphere = 0.0;
+    double ka_sphere = 0.5;
     double kr_sphere = 1.0;
     double kt_sphere = 1.0;
     double refIndex_sphere = 0.0;
     double phongConst_sphere = 500;
-    Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,ka_sphere,kr_sphere,kt_sphere,refIndex_sphere,phongConst_sphere,colorSphere);
+    Sphere sphere = Sphere(center_sphere,radius,kd_sphere,ks_sphere,ka_sphere,kr_sphere,kt_sphere,refIndex_sphere,phongConst_sphere,colorSphere,texture_sun);
     sphere_object.push_back(sphere);
     point3 center_sphere2 = point3(2,0,-2.5);
     double radius2 = 1;
     color colorSphere2 = color(0.596,0.960,0.709);
-    double kd_sphere2 = 0.0;
+    double kd_sphere2 = 0.5;
     double ks_sphere2 = 1.0;
-    double ka_sphere2 = 0.0;
+    double ka_sphere2 = 0.5;
     double kr_sphere2 = 1.0;
     double kt_sphere2 = 1.0;
     double refIndex_sphere2 = 0.0;
     double phongConst_sphere2 = 500;
-    Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,kr_sphere2,kt_sphere2,refIndex_sphere2,phongConst_sphere2,colorSphere2);
+    Sphere sphere2 = Sphere(center_sphere2,radius2,kd_sphere2,ks_sphere2,ka_sphere2,kr_sphere2,kt_sphere2,refIndex_sphere2,phongConst_sphere2,colorSphere2,texture_empty);
     sphere_object.push_back(sphere2);
     point3 center_sphere3 = point3(1,0,0);
     double radius3 = 0.5;
     color colorSphere3 = color(0.517,0.549,0.968);
-    double kd_sphere3 = 0.0;
+    double kd_sphere3 = 0.5;
     double ks_sphere3 = 1;
-    double ka_sphere3 = 0.0;
+    double ka_sphere3 = 0.5;
     double kr_sphere3 = 0.5;
     double kt_sphere3 = 1;
-    double refIndex_sphere3 = 0.25;
+    double refIndex_sphere3 = 0.0;
     double phongConst_sphere3 = 500;
-    Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,kr_sphere3,kt_sphere3,refIndex_sphere3,phongConst_sphere3,colorSphere3);
+    Sphere sphere3 = Sphere(center_sphere3,radius3,kd_sphere3,ks_sphere3,ka_sphere3,kr_sphere3,kt_sphere3,refIndex_sphere3,phongConst_sphere3,colorSphere3,texture_moon);
     sphere_object.push_back(sphere3);
 
     //Adding object Plane;
@@ -433,7 +472,7 @@ int main() {
     double refIndex_plane = 0.0;
     double phongConst_plane = 0.9;
     color color_plane = color(0.4,0.4,0.4);
-    Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,kr_plane,kt_plane,refIndex_plane,phongConst_plane,color_plane);
+    Plane plane = Plane(center_plane,Normal_plane,Xmin,Xmax,kd_plane,ks_plane,ka_plane,kr_plane,kt_plane,refIndex_plane,phongConst_plane,color_plane,texture_empty);
     plane_object.push_back(plane);
 
     point3 center_plane2 = point3(0,0,0);
@@ -445,10 +484,10 @@ int main() {
     double ka_plane2 = 0.0;
     double kr_plane2 = 1.0;
     double kt_plane2 = 0.5;
-    double refIndex_plane2 = 0.9;
+    double refIndex_plane2 = 0.0;
     double phongConst_plane2 = 0.9;
     color color_plane2 = color(0.5,0.5,0.5);
-    Plane plane2 = Plane(center_plane2,Normal_plane2,Xmin2,Xmax2,kd_plane2,ks_plane2,ka_plane2,kr_plane2,kt_plane2,refIndex_plane2,phongConst_plane2,color_plane2);
+    Plane plane2 = Plane(center_plane2,Normal_plane2,Xmin2,Xmax2,kd_plane2,ks_plane2,ka_plane2,kr_plane2,kt_plane2,refIndex_plane2,phongConst_plane2,color_plane2,texture_empty);
     // plane_object.push_back(plane2);
 
     //Ambient Color or Light;

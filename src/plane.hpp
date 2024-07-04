@@ -4,14 +4,14 @@
 #include "vec3.h"
 #include "color.h"
 #include <climits>
-
+#include "texture.hpp"
 
 class Plane {
   public:
     Plane() {}
 
-    Plane(const point3& center, const vec3& Normal, const vec3& Xmin, const vec3& Xmax, const double Kd, const double Ks, const double Ka, const double Kr, const double Kt, double refIndex, const double phongConst, const color& objColor) 
-    : center(center), Normal(Normal), Xmin(Xmin), Xmax(Xmax), Kd(Kd), Ks(Ks), Ka(Ka), Kr(Kr), Kt(Kt), refIndex(refIndex), phongConst(phongConst), objectColor(objColor) {}
+    Plane(const point3& center, const vec3& Normal, const vec3& Xmin, const vec3& Xmax, const double Kd, const double Ks, const double Ka, const double Kr, const double Kt, double refIndex, const double phongConst, const color& objColor, const Texture& objTexture) 
+    : center(center), Normal(Normal), Xmin(Xmin), Xmax(Xmax), Kd(Kd), Ks(Ks), Ka(Ka), Kr(Kr), Kt(Kt), refIndex(refIndex), phongConst(phongConst), objectColor(objColor), objTexture(objTexture) {}
 
     const point3& getCenter() const  { return center; }
     const vec3& getNormal() const { return Normal; }
@@ -24,7 +24,8 @@ class Plane {
     void setRefIndex(double newRefIndex) { refIndex = newRefIndex; }
     const double getphongConst() const { return phongConst; }
     const color& getObjectColor() const  { return objectColor; }
-    
+    const Texture& getObjectTexture() const  { return objTexture; }
+
     double hit_plane(const ray& r) {
         double t;
         t = dot(Normal, center - r.origin()) / (dot(Normal, r.direction()));
@@ -50,7 +51,7 @@ class Plane {
     double phongConst;
     vec3 Xmin;
     vec3 Xmax;
-
+    Texture objTexture;
 };
 
 #endif
